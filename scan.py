@@ -2,13 +2,13 @@ import json
 import sys
 import time
 import subprocess
-import maxminddb
+# import maxminddb
 
 # print("hello world")
 command_input = sys.argv
 timeout_num = 2
-input_file = str(command_input[1])
-output_file = str(command_input[2])
+input_url = str(command_input[1])
+method = str(command_input[2])
 
 
 
@@ -19,38 +19,46 @@ class ScanClass:
     # results_to_pass = ""
     def __init__(self, input_file, output_file):
         # print("in main")
-        file = open(input_file, 'r')
-        file_lines = file.readlines()
-        self.output_dictonary = {}
-        self.scan_output_dictonary = {}
+        # file = open(input_file, 'r')
+        # file_lines = file.readlines()
+        # self.output_dictonary = {}
+        # self.scan_output_dictonary = {}
         self.result_to_pass = ""
         self.hsts_bool = False
-        for line in file_lines:
-            line = line.rstrip()
-            output = self.scan(line)
-            self.output_dictonary[line] = output
-        file.close()
-        with open(output_file, 'w') as f:
-            json.dump(self.output_dictonary, f, sort_keys=False, indent=4)
-            f.close()
+        # for line in file_lines:
+        #     line = line.rstrip()
+        #     output = self.scan(line)
+        #     self.output_dictonary[line] = output
+        # # file.close()
+        # with open(output_file, 'w') as f:
+        #     json.dump(self.output_dictonary, f, sort_keys=False, indent=4)
+        #     f.close()
+        print(self.scan(input_url, method))
 
 
-    def scan(self, url):
+    def scan(self, url, method):
         func_names = ["scan_time", "ipv4_addresses", "ipv6_addresses", "http_server", "insecure_http", "redirect_to_https", "hsts", "tls_versions", "root_ca", "rdns_names", "rtt_range", "geo_locations"]
         # func_names = ["scan_time", "tls_versions"]  # , "rdns_names"]
         # func_names = ["scan_time", "ipv4_addresses", "ipv6_addresses", "http_server", "redirect_to_https", "hsts", "tls_versions", "root_ca", "rdns_names", "rtt_range", "geo_locations"]
         # output_dictonary = {}
         self.scan_output_dictonary = {}
-        for func in func_names:
-            # print(url, func)
-            try:
-                self.scan_output_dictonary[func] = eval('self.' + func + "('" + url + "')")
-            except (FileNotFoundError, OSError) as e:
-                # print("exception caught: ", e)
-                error_out = func + " is not able to run due to missing command line tool"
-                # print(error_out, file=sys.stderr)
-                sys.stderr.write(error_out)
-        return self.scan_output_dictonary
+        outputVal = ""
+        try:
+            outputVal = eval('self.' + method + "('" + url + "')")
+        except (FileNotFoundError, OSError) as e:
+            error_out = func + " is not able to run due to missing command line tool"
+            # print(error_out, file=sys.stderr)
+            sys.stderr.write(error_out)
+        # for func in func_names:
+        #     # print(url, func)
+        #     try:
+        #         self.scan_output_dictonary[func] = eval('self.' + func + "('" + url + "')")
+        #     except (FileNotFoundError, OSError) as e:
+        #         # print("exception caught: ", e)
+        #         error_out = func + " is not able to run due to missing command line tool"
+        #         # print(error_out, file=sys.stderr)
+        #         sys.stderr.write(error_out)
+        return outputVal
 
     def subprocess_caller(self, args, timeout_input):
         result = ""
@@ -170,6 +178,7 @@ class ScanClass:
             return None
 
     def insecure_http(self, url):
+        self.http_server(url);
         # print("self.result_to_pass: ", self.result_to_pass)
         if self.result_to_pass != "":
             # self.result_to_pass = ""
@@ -229,6 +238,7 @@ class ScanClass:
             return True
 
     def redirect_to_https(self, url):
+        self.http_server(url)
         if self.result_to_pass != "":
             if "200 OK" in self.result_to_pass:
                 self.result_to_pass = ""
@@ -255,6 +265,7 @@ class ScanClass:
             return False
 
     def hsts(self, url):
+        self.redirect_to_https(url)
         if self.hsts_bool:
             self.hsts_bool = False
             return True
@@ -381,7 +392,8 @@ class ScanClass:
             return None
 
     def rdns_names(self, url):
-        ip4_addys = self.scan_output_dictonary["ipv4_addresses"]
+        # ip4_addys = self.scan_output_dictonary["ipv4_addresses"]
+        ip4_addys = self.ipv4_addresses(url);
         rdns_names_arr = []
         for addy in ip4_addys:
             args = ["nslookup", "-type=PTR", addy]
@@ -404,7 +416,8 @@ class ScanClass:
     def rtt_range(self, url):
         ranges = []
         min_max_tuple = []
-        ip4_addys = self.scan_output_dictonary["ipv4_addresses"]
+        # ip4_addys = self.scan_output_dictonary["ipv4_addresses"]
+        ip4_addys = self.ipv4_addresses(url);
         ports = ["80", "443", "22"]
         # print(ip4_addys[0])
         for addy in ip4_addys:
@@ -471,4 +484,4 @@ class ScanClass:
 
 
 
-s = ScanClass(input_file, output_file)
+s = ScanClass(input_url, method)

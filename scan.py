@@ -5,10 +5,10 @@ import subprocess
 # import maxminddb
 
 # print("hello world")
-command_input = sys.argv
+# command_input = sys.argv
 timeout_num = 2
-input_url = str(command_input[1])
-method = str(command_input[2])
+# input_url = str(command_input[1])
+# method = str(command_input[2])
 
 
 
@@ -17,23 +17,28 @@ class ScanClass:
     # print("after inout")
     # output_dictonary = {}
     # results_to_pass = ""
-    def __init__(self, input_file, output_file):
-        # print("in main")
-        # file = open(input_file, 'r')
-        # file_lines = file.readlines()
-        # self.output_dictonary = {}
-        # self.scan_output_dictonary = {}
+    # TODO if uncomment add back the call at the end
+    # def __init__(self, input_file, output_file):
+    #     # print("in main")
+    #     # file = open(input_file, 'r')
+    #     # file_lines = file.readlines()
+    #     # self.output_dictonary = {}
+    #     # self.scan_output_dictonary = {}
+    #     self.result_to_pass = ""
+    #     self.hsts_bool = False
+    #     # for line in file_lines:
+    #     #     line = line.rstrip()
+    #     #     output = self.scan(line)
+    #     #     self.output_dictonary[line] = output
+    #     # # file.close()
+    #     # with open(output_file, 'w') as f:
+    #     #     json.dump(self.output_dictonary, f, sort_keys=False, indent=4)
+    #     #     f.close()
+    #     # print(self.scan(input_url, method))
+
+    def __init__(self):
         self.result_to_pass = ""
         self.hsts_bool = False
-        # for line in file_lines:
-        #     line = line.rstrip()
-        #     output = self.scan(line)
-        #     self.output_dictonary[line] = output
-        # # file.close()
-        # with open(output_file, 'w') as f:
-        #     json.dump(self.output_dictonary, f, sort_keys=False, indent=4)
-        #     f.close()
-        print(self.scan(input_url, method))
 
 
     def scan(self, url, method):
@@ -484,4 +489,4 @@ class ScanClass:
 
 
 
-s = ScanClass(input_url, method)
+# s = ScanClass(input_url, method)

@@ -46,24 +46,36 @@ class ScanClass:
         # func_names = ["scan_time", "tls_versions"]  # , "rdns_names"]
         # func_names = ["scan_time", "ipv4_addresses", "ipv6_addresses", "http_server", "redirect_to_https", "hsts", "tls_versions", "root_ca", "rdns_names", "rtt_range", "geo_locations"]
         # output_dictonary = {}
-        self.scan_output_dictonary = {}
-        outputVal = ""
-        try:
-            outputVal = eval('self.' + method + "('" + url + "')")
-        except (FileNotFoundError, OSError) as e:
-            error_out = func + " is not able to run due to missing command line tool"
-            # print(error_out, file=sys.stderr)
-            sys.stderr.write(error_out)
-        # for func in func_names:
-        #     # print(url, func)
-        #     try:
-        #         self.scan_output_dictonary[func] = eval('self.' + func + "('" + url + "')")
-        #     except (FileNotFoundError, OSError) as e:
-        #         # print("exception caught: ", e)
-        #         error_out = func + " is not able to run due to missing command line tool"
-        #         # print(error_out, file=sys.stderr)
-        #         sys.stderr.write(error_out)
-        return outputVal
+        # message = "url: " + url + " method: " + method
+        # original_stdout = sys.stdout  # Save a reference to the original standard output
+        #
+        # with open('message.txt', 'w') as f:
+        #     sys.stdout = f  # Change the standard output to the file we created.
+        #     # print('This message will be written to a file.')
+        #     print(message)
+        #     sys.stdout = original_stdout
+        #     f.close()
+        if self.isValidUrl(url):
+            self.scan_output_dictonary = {}
+            outputVal = ""
+            try:
+                outputVal = eval('self.' + method + "('" + url + "')")
+            except (FileNotFoundError, OSError) as e:
+                error_out = func + " is not able to run due to missing command line tool"
+                # print(error_out, file=sys.stderr)
+                sys.stderr.write(error_out)
+            # for func in func_names:
+            #     # print(url, func)
+            #     try:
+            #         self.scan_output_dictonary[func] = eval('self.' + func + "('" + url + "')")
+            #     except (FileNotFoundError, OSError) as e:
+            #         # print("exception caught: ", e)
+            #         error_out = func + " is not able to run due to missing command line tool"
+            #         # print(error_out, file=sys.stderr)
+            #         sys.stderr.write(error_out)
+            return outputVal
+        else:
+            return None
 
     def subprocess_caller(self, args, timeout_input):
         result = ""
@@ -96,6 +108,16 @@ class ScanClass:
     def scan_time(self, url):
         return time.time()
 
+    def isValidUrl(self, url):
+        args = ["curl", "-I", "--http2", url]
+        result = self.subprocess_caller(args, timeout_num)
+        if result == "":
+            return False
+        elif "Could not resolve host" in result:
+            return False
+        else:
+            return True
+
     def ipv4_addresses(self, url):
         dns_resolvers = ["208.67.222.222", "1.1.1.1", "8.8.8.8", "8.26.56.26", "9.9.9.9", "64.6.65.6", "91.239.100.100", "185.228.168.168", "77.88.8.7", "156.154.70.1", "198.101.242.72", "176.103.130.130"]
         ip_addys = []
@@ -121,6 +143,8 @@ class ScanClass:
                 addy = addy.strip()
                 if addy not in ip_addys:
                     ip_addys.append(addy)
+        if ip_addys == []:
+            return "No IPV4 Addresses Found"
         return ip_addys
 
     def ipv6_addresses(self, url):
@@ -148,6 +172,8 @@ class ScanClass:
                     addy = addy[0].strip()
                     if addy not in ip_addys:
                         ip_addys.append(addy)
+        if ip_addys == []:
+            return "No IPV6 Addresses Found"
         return ip_addys
 
     def http_server(self, url):
@@ -174,7 +200,8 @@ class ScanClass:
             if len(split_result) == 1:
                 split_result = result.split("server: ")
                 if len(split_result) == 1:
-                    return None
+                    return "No HTTP Server Found"
+                    # return None
             del split_result[0]
             server = split_result[0].split("\r\n")
             answer = server[0]
@@ -183,14 +210,19 @@ class ScanClass:
             return None
 
     def insecure_http(self, url):
-        self.http_server(url);
-        # print("self.result_to_pass: ", self.result_to_pass)
-        if self.result_to_pass != "":
-            # self.result_to_pass = ""
-            return True
+        a = self.http_server(url)
+        if a is not None:
+            # print("self.result_to_pass: ", self.result_to_pass)
+            if self.result_to_pass != "":
+                # self.result_to_pass = ""
+                return "True"
+                # return True
+            else:
+                # self.result_to_pass = ""
+                return "False"
+                # return False
         else:
-            # self.result_to_pass = ""
-            return False
+            return None
 
     def redirect_helper(self, location):
         count = 1
@@ -243,39 +275,50 @@ class ScanClass:
             return True
 
     def redirect_to_https(self, url):
-        self.http_server(url)
-        if self.result_to_pass != "":
-            if "200 OK" in self.result_to_pass:
-                self.result_to_pass = ""
-                return False
-            else:
-                location_split = self.result_to_pass.split("Location: ")
-                if len(location_split) > 1:
-                    del location_split[0]
-                    location_split = location_split[0].split("\r\n")
-                    location = location_split[0]
-                    if "https://" in location:
-                        self.result_to_pass = ""
-                        self.redirect_hsts_helper(location)
-                        return True
-                    else:
-                        return_val = self.redirect_helper(location)
-                        self.result_to_pass = ""
-                        return return_val
-                else:
+        a = self.http_server(url)
+        if a is not None:
+            if self.result_to_pass != "":
+                if "200 OK" in self.result_to_pass:
                     self.result_to_pass = ""
-                    return False
-        else:
-            self.result_to_pass = ""
-            return False
+                    return "False"
+                    # return False
+                else:
+                    location_split = self.result_to_pass.split("Location: ")
+                    if len(location_split) > 1:
+                        del location_split[0]
+                        location_split = location_split[0].split("\r\n")
+                        location = location_split[0]
+                        if "https://" in location:
+                            self.result_to_pass = ""
+                            self.redirect_hsts_helper(location)
+                            return "True"
+                            # return True
+                        else:
+                            return_val = self.redirect_helper(location)
+                            self.result_to_pass = ""
+                            return return_val
+                    else:
+                        self.result_to_pass = ""
+                        return "False"
+                        # return False
+            else:
+                self.result_to_pass = ""
+                return "False"
+                # return False
+        else: return None
 
     def hsts(self, url):
-        self.redirect_to_https(url)
-        if self.hsts_bool:
-            self.hsts_bool = False
-            return True
+        a = self.redirect_to_https(url)
+        if a is not None:
+            if self.hsts_bool:
+                self.hsts_bool = False
+                return "True"
+                # return True
+            else:
+                return "False"
+                # return False
         else:
-            return False
+            return None
 
     def tls_nmap_helper(self, result, return_arr, tls_ver):
         split_result = result.split(tls_ver)
@@ -315,14 +358,19 @@ class ScanClass:
                 else:
                     count += 1
         if tls_3_in:
-            return True
+            return "True"
+            # return True
         else:
             if result != "":
                 if "New, TLSv1.3," in result:
-                    return True
-                else: return False
+                    return "True"
+                    # return True
+                else:
+                    return "False"
+                    # return False
             else:
-                return False
+                return "False"
+                # return False
 
     def tls_versions(self, url):
         # TODO for spacejam, auditoryneuroscience.com figure out timeout issue, 16 seconds not enough, either false
@@ -349,9 +397,13 @@ class ScanClass:
             if return_arr:
                 return return_arr
             else:
-                return []
+                return "TLS version lookup failed due to an intentional timeout"
+                # return None
+                # return []
         else:
-            return []
+            return "TLS version lookup failed due to an intentional timeout"
+            # return None
+            # return []
 
     def root_ca(self, url):
         input_url = url + ":443"
@@ -378,7 +430,8 @@ class ScanClass:
 
 
         if return_none:
-            return None
+            return "No Root CA Found"
+            # return None
         # print("result: \n", result)
         root_ca = False
         split_result = result.split("O = ")
@@ -394,7 +447,8 @@ class ScanClass:
         if root_ca:
             return root_ca
         else:
-            return None
+            return "No Root CA Found"
+            # return None
 
     def rdns_names(self, url):
         # ip4_addys = self.scan_output_dictonary["ipv4_addresses"]
@@ -415,8 +469,9 @@ class ScanClass:
         if rdns_names_arr:
             return rdns_names_arr
         else:
-
-            return []
+            return "No RDNS Names Found"
+            # return None
+            # return []
 
     def rtt_range(self, url):
         ranges = []
@@ -456,7 +511,8 @@ class ScanClass:
             ranges.append(rtt)
 
         if len(ranges) == 0:
-            return None
+            return "RTT Failed, Domain unresponsive"
+            # return None
         min_max_tuple = [min(ranges), max(ranges)]
         return min_max_tuple
 

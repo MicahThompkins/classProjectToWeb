@@ -7,22 +7,43 @@ import subprocess
 
 # import scan
 # print(str(time.time()))
+
+
+
+timeout_num =2
+#testing isvalidUrl
+url = "facebook.gsiergNOSEnaopsec"
+args = ["curl", "-I", "--http2", url]
 result = ""
 try:
-    result = subprocess.check_output(["openssl", "s_client", "-tls1_3", "-connect", "facebook.com:443"],
-                                      stderr=subprocess.DEVNULL, timeout=2).decode("utf-8")
+    result = subprocess.check_output(args, stderr=subprocess.STDOUT, timeout=timeout_num)
+
 except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
     # result = str(e)
     # print("e:", e)
     # print(e.output)
     result = str(e.output)
 
-print(type(result))
+print(result)
+if "Could not resolve host" in result:
+    print("could not resolve host found")
 
-if "New, TLSv1.3," in result:
-    print("it worked tls1_3 in use")
-else:
-    print("Tls v1.3 not in use")
+# result = ""
+# try:
+#     result = subprocess.check_output(["openssl", "s_client", "-tls1_3", "-connect", "facebook.com:443"],
+#                                       stderr=subprocess.DEVNULL, timeout=2).decode("utf-8")
+# except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as e:
+#     # result = str(e)
+#     # print("e:", e)
+#     # print(e.output)
+#     result = str(e.output)
+#
+# print(type(result))
+#
+# if "New, TLSv1.3," in result:
+#     print("it worked tls1_3 in use")
+# else:
+#     print("Tls v1.3 not in use")
 
 
 

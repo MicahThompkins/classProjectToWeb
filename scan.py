@@ -2,7 +2,7 @@ import json
 import sys
 import time
 import subprocess
-import maxminddb
+# import maxminddb
 
 # print("hello world")
 command_input = sys.argv

@@ -141,7 +141,7 @@ class ScanClass:
                 find_index = address.find("Address: ")
                 addy = address[find_index + 9:]
                 addy = addy.strip()
-                if addy not in ip_addys:
+                if (addy not in ip_addys) and (":" not in addy):
                     ip_addys.append(addy)
         if ip_addys == []:
             return "No IPV4 Addresses Found"
@@ -160,17 +160,22 @@ class ScanClass:
             # except subprocess.CalledProcessError:
             #     # print("calledProcesserror")
             #     continue
-            args = ["nslookup", "-type=AAAA", url, dns]
+            # args = ["nslookup", "-type=AAAA", url, dns]
+            args = ["nslookup", url, dns]
             result = self.subprocess_caller(args, timeout_num)
             if "Can't find" in result or result == "":
                 continue
             else:
-                split_result = result.split("has AAAA address")
+                # split_result = result.split("has AAAA address")
+                split_result = result.split("Name")
                 del split_result[0]
                 for address in split_result:
-                    addy = address.split("\n")
-                    addy = addy[0].strip()
-                    if addy not in ip_addys:
+                    find_index = address.find("Address: ")
+                    addy = address[find_index + 9:]
+                    addy = addy.strip()
+                    # addy = address.split("\n")
+                    # addy = addy[0].strip()
+                    if (addy not in ip_addys) and ("." not in addy):
                         ip_addys.append(addy)
         if ip_addys == []:
             return "No IPV6 Addresses Found"

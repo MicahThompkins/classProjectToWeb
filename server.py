@@ -3,6 +3,11 @@ from scan import ScanClass
 app = Flask(__name__)
 # scanner = ScanClass()
 
+@app.route('/', methods=['GET'])
+def printTest():
+    print("Get default")
+    return "Get default"
+
 @app.route('/', methods=['POST'])
 def hello_world():
     scanner = ScanClass()
